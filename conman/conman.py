@@ -5,7 +5,7 @@ import docker
 from docker.errors import NotFound as DockerNotFound
 import logging
 
-from conman.errors import ContainerDoesNotExist, ContainerExists, ContainerPortAutoAssignError
+from conman.errors import ContainerPortAutoAssignError, ContainerNotRunning
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ def clean_ports(dct):
     return {str(k):str(v) for k, v in dct.items()}
 
 
-class AbstractContiner:
+class AbstractConmanContiner:
 
     def __init__(self, _id):
         self._id = _id
@@ -35,11 +35,11 @@ class AbstractContiner:
         raise NotImplementedError()
 
 
-class Container:
+class ConmanContainer:
 
     image = None
     container_name = None
-    ports = None
+    local_ports = None
 
     def __init__(self, _id):
         """
@@ -51,16 +51,61 @@ class Container:
         self.name = "%s-%s" % (self.__class__.container_name, _id)
         self.client = docker.from_env()
 
+        # holds private container
+        self._container = None
+
+    @property
+    def ports(self):
+        """
+        Port configuration for the container. Returns the same result as `.attrs['NetworkSettings']['Ports']`
+        for a Docker Container
+        :return: Dict
+        """
+        # if container is not running, it's ports are not available
+        if not self.container:
+            raise ContainerNotRunning()
+
+        # container is running, but self._ports is not set, this means, Cona
+        return self.container.attrs['NetworkSettings']['Ports']
+
+    def get_host_address(self, port, protocol='tcp'):
+        """
+        Returns the host address for a local port
+        :param port: Port that is exposed by container
+        :param protocol: Protocol used for exposing the port of container
+        :return: str
+        """
+        conf = self.ports["%s/%s" % (port, protocol)][0]
+        return "%(HostIp)s:%(HostPort)s" % conf
+
+    @property
+    def container(self):
+        """
+        Returns the underlying Docker Container for this ConmanContainer object.
+        :return:
+        """
+        if self._container:
+            return self._container
+        else:
+            self._container = self._get_container()
+
+        return self._container
+
     def _get_container_or_error(self):
         try:
             return self.client.containers.get(self.name)
         except DockerNotFound as e:
             logger.exception("Docker with id %s not found." % self.name)
-            raise ContainerDoesNotExist()
+            raise ContainerNotRunning()
 
     def _get_container(self):
         try:
-            return self.client.containers.get(self.name)
+            container = self.client.containers.get(self.name)
+            # if container is exited, we simply remove it & return None
+            if container.status == 'exited':
+                container.remove()
+                return None
+            return container
         except DockerNotFound as e:
             return None
 
@@ -71,11 +116,10 @@ class Container:
 
         :return: str
         """
-        container = self._get_container()
-        if not container:
+        if not self.container:
             return STATUS_NOT_RUNNING
 
-        return container.status
+        return self.container.status
 
     def _image_exists(self):
         """
@@ -100,7 +144,7 @@ class Container:
             raise ContainerPortAutoAssignError()
 
         # if container ports is None, we dont have to generate ports
-        container_ports = self.__class__.ports
+        container_ports = self.__class__.local_ports
         if container_ports is None:
             return None
 
@@ -116,30 +160,23 @@ class Container:
         :raises: DockerExists
         :return: None
         """
-        # check if already a server with the same id exists,
-        # if not create one
-        try:
-            container = self.client.containers.get(self.name)
-
-            # if container exited but still in the list, remove
-            if container.status == 'exited':
-                container.remove()
-            else:
-                raise ContainerExists()
-        except DockerNotFound as e:
-            pass
+        if self.container:
+            logger.warning("Container already is running, will not try to restart")
+            return
 
         # TODO: provide a mechanism for reporting progress
         if not self._image_exists():
-            logger.warning("Image %s not found in local filesystem. Downloading the image, this may take a while." % IMAGE)
+            logger.warning("Image %s not found in local filesystem. "
+                           "Downloading the image, this may take a while." % self.image)
 
         # use user provided ports or generate your own port mapping
-        port_mapping = clean_ports(ports) if ports else self.__generate_ports()
+        if not ports:
+            ports = self.__generate_ports()
 
         # run container
         self.client.containers.run(self.image,
                                    name=self.name,
-                                   ports=port_mapping,
+                                   ports=clean_ports(ports),
                                    detach=True,  # daemon mode
                                    stdin_open=True, tty=True, command="/bin/bash"
                                    )
@@ -150,9 +187,11 @@ class Container:
 
         :return: None
         """
-        container = self._get_container_or_error()
-        container.stop()
-        container.remove()
+        if self.container is None:
+            raise ContainerNotRunning()
+
+        self.container.stop()
+        self.container.remove()
 
         # TODO: Move this to a more fitting call
         self.client.containers.prune()  # remove stopped dockers

@@ -1,4 +1,4 @@
-class ContainerDoesNotExist(Exception):
+class ContainerNotRunning(Exception):
     pass
 
 
