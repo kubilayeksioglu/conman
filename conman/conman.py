@@ -40,6 +40,7 @@ class ConmanContainer:
     image = None
     container_name = None
     local_ports = None
+    default_command = None
 
     def __init__(self, _id):
         """
@@ -180,6 +181,14 @@ class ConmanContainer:
                                    detach=True,  # daemon mode
                                    stdin_open=True, tty=True, command="/bin/bash"
                                    )
+
+        # send a default command, in case
+        default_command = self.__class__.default_command
+        if default_command:
+            self.command(default_command)
+
+    def command(self, command):
+        self.container.exec_run("bash -c '%s'" % command, detach=True)
 
     def stop(self):
         """
