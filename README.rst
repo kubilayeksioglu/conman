@@ -5,14 +5,39 @@ conman
 Docker Container Manager for Python
 
 
-* Free software: MIT license
-* Documentation: https://conman.readthedocs.io.
+Install
+---
 
+`pip install git+https://github.com/kubilayeksioglu/conman.git`
 
-Features
---------
+Usage
+-----
 
-* TODO
+```python
+from conman import ConmanContainer
+
+class CustomContainer(ConmanContainer):
+    image = "docker-image"
+    container_name = "custom-name"
+    local_ports = (8080)
+    default_command = None
+
+from conman.utils import get_ip
+
+container = CustomContainer(1)
+container.start()
+container.get_host_address(8080) # returns "0.0.0.0:8081"
+
+container = CustomContainer(2)
+container.start(get_ip())
+container.get_host_address(8080) # returns "$WHATEVER_YOUR_IP_IS$:8082"
+```
+
+To check status of a container:
+
+```python
+container.status # returns either "exited" or "running"
+```
 
 Credits
 -------
