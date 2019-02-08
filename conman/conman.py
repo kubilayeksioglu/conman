@@ -12,8 +12,12 @@ logger = logging.getLogger(__name__)
 STATUS_NOT_RUNNING, STATUS_RUNNING = 'exited', 'running'
 
 
-def clean_ports(dct):
-    return {str(k):str(v) for k, v in dct.items()}
+def clear_ports(dct):
+    return {str(k): str(v) for k, v in dct.items()}
+
+
+def add_host(ip, dct):
+    return {k: (ip, v) for k, v in dct.items()}
 
 
 class AbstractConmanContiner:
@@ -150,9 +154,9 @@ class ConmanContainer:
             return None
 
         # we simply add id of the container to the ports
-        return clean_ports({p: (p + self.id) for p in container_ports})
+        return clear_ports({p: (p + self.id) for p in container_ports})
 
-    def start(self, ports=None):
+    def start(self, host='0.0.0.0', ports=None):
         """
         Starts a container
         If a container with object id already exists, raises DockerServerExistsError.
@@ -174,10 +178,12 @@ class ConmanContainer:
         if not ports:
             ports = self.__generate_ports()
 
+        clean_ports = clear_ports(ports)
+
         # run container
         self.client.containers.run(self.image,
                                    name=self.name,
-                                   ports=clean_ports(ports),
+                                   ports=add_host(host, clean_ports),
                                    detach=True,  # daemon mode
                                    stdin_open=True, tty=True, command="/bin/bash"
                                    )
@@ -204,3 +210,6 @@ class ConmanContainer:
 
         # TODO: Move this to a more fitting call
         self.client.containers.prune()  # remove stopped dockers
+
+    def __del__(self):
+        self.client.close()
