@@ -64,6 +64,7 @@ class ConmanContainer:
         """
         Port configuration for the container. Returns the same result as `.attrs['NetworkSettings']['Ports']`
         for a Docker Container
+
         :return: Dict
         """
         # if container is not running, it's ports are not available
@@ -76,6 +77,7 @@ class ConmanContainer:
     def get_host_address(self, port, protocol='tcp'):
         """
         Returns the host address for a local port
+
         :param port: Port that is exposed by container
         :param protocol: Protocol used for exposing the port of container
         :return: str
@@ -87,6 +89,7 @@ class ConmanContainer:
     def container(self):
         """
         Returns the underlying Docker Container for this ConmanContainer object.
+
         :return:
         """
         if self._container:

@@ -8,9 +8,3 @@ __version__ = '0.1.6'
 
 
 from conman.conman import ConmanContainer
-
-class SlaveContainer(ConmanContainer):
-
-    image = 'ride-gznode'
-    container_name = 'arena-slave'
-    local_ports = (8080,)

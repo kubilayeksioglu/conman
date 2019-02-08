@@ -6,11 +6,11 @@ Welcome to conman's documentation!
    :caption: Contents:
 
    readme
-   installation
-   usage
+   #installation
+   #usage
    modules
-   contributing
-   history
+   #contributing
+   #history
 
 Indices and tables
 ==================
