@@ -6,38 +6,38 @@ Docker Container Manager for Python
 
 
 Install
----
+-------
 
-`pip install git+https://github.com/kubilayeksioglu/conman.git`
+Install with::
+
+    pip install git+https://github.com/kubilayeksioglu/conman.git
 
 Usage
 -----
 
-```python
-from conman import ConmanContainer
+Use as::
 
-class CustomContainer(ConmanContainer):
-    image = "docker-image"
-    container_name = "custom-name"
-    local_ports = (8080)
-    default_command = None
+    from conman import ConmanContainer
 
-from conman.utils import get_ip
+    class CustomContainer(ConmanContainer):
+        image = "docker-image"
+        container_name = "custom-name"
+        local_ports = (8080)
+        default_command = None
 
-container = CustomContainer(1)
-container.start()
-container.get_host_address(8080) # returns "0.0.0.0:8081"
+    from conman.utils import get_ip
 
-container = CustomContainer(2)
-container.start(get_ip())
-container.get_host_address(8080) # returns "$WHATEVER_YOUR_IP_IS$:8082"
-```
+    container = CustomContainer(1)
+    container.start()
+    container.get_host_address(8080) # returns "0.0.0.0:8081"
 
-To check status of a container:
+    container = CustomContainer(2)
+    container.start(get_ip())
+    container.get_host_address(8080) # returns "$WHATEVER_YOUR_IP_IS$:8082"
 
-```python
-container.status # returns either "exited" or "running"
-```
+Check status of a container::
+
+    container.status # returns either "exited" or "running"
 
 Credits
 -------
