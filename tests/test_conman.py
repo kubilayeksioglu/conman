@@ -2,15 +2,19 @@
 # -*- coding: utf-8 -*-
 
 """Tests for `conman` package."""
-
-
+import os
 import unittest
+
+import docker
+
 from conman import ConmanContainer
 from conman.utils import get_ip
 
+TESTS_DIR = os.path.dirname(__file__)
+
 
 class GznodeContainer(ConmanContainer):
-    image = "ride-gznode"
+    image = "197358733965.dkr.ecr.eu-west-1.amazonaws.com/ride/ros-gazebo:v1.0"
     container_name = "test-gznode"
     local_ports = (8080,)
     default_command = None
@@ -61,4 +65,32 @@ class TestConman(unittest.TestCase):
         expected = '%s:8081' % local_ip
         self.assertEqual(address, expected, "Host address is wrong. Expected: %s Actual: %s")
         container.stop()
+
+    def test_volume(self):
+        """
+        Test if an IP is provided, can ConmanContainer bind that to IP address instead of 0.0.0.0
+        :return:
+        """
+        source_path = os.path.abspath(TESTS_DIR)
+
+        container = GznodeContainer(1)
+        container.volumes = {source_path: {
+            'bind': '/colab',
+            'mode': 'rw'
+        }}
+        container.start()
+
+        client = docker.APIClient(base_url='unix://var/run/docker.sock')
+        inspection = client.inspect_container(container.container.id)
+
+        container.stop()
+        client.close()
+
+        expected = source_path
+        actual = inspection['Mounts'][0]['Source']
+        self.assertEqual(actual, expected, "Host address is wrong. Expected: %s Actual: %s" % (actual, expected))
+
+
+if __name__ == "__main__":
+    unittest.main()
 
