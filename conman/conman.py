@@ -45,6 +45,7 @@ class ConmanContainer:
     container_name = None
     local_ports = None
     default_command = None
+    volumes = {}
 
     def __init__(self, _id):
         """
@@ -188,7 +189,8 @@ class ConmanContainer:
                                    name=self.name,
                                    ports=add_host(host, clean_ports),
                                    detach=True,  # daemon mode
-                                   stdin_open=True, tty=True, command="/bin/bash"
+                                   stdin_open=True, tty=True, command="/bin/bash",
+                                   volumes=self.volumes
                                    )
 
         # send a default command, in case
