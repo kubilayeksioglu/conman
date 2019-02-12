@@ -198,8 +198,20 @@ class ConmanContainer:
         if default_command:
             self.command(default_command)
 
-    def command(self, command):
-        self.container.exec_run("bash -c '%s'" % command, detach=True)
+    def command(self, command, output=False):
+        """
+        Send a bash command to the container
+
+        :param command: str     Command to be run
+        :param output: bool     Whether Conman should wait for the output or detach immediately.
+        :return: None if output=False, output of the bash command as a string otherwise
+        """
+        if not output:
+            self.container.exec_run("bash -c '%s'" % command, detach=True)
+            return None
+
+        exit_code, stream_msgs = self.container.exec_run("bash -c '%s'" % command, stream=True)
+        return stream_msgs[0].decode('utf-8')
 
     def stop(self):
         """
