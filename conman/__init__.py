@@ -4,7 +4,7 @@
 
 __author__ = """Kubilay Eksioglu"""
 __email__ = 'kubilayeksioglu@gmail.com'
-__version__ = '0.1.8'
+__version__ = '0.1.9'
 
 
 from conman.conman import ConmanContainer
