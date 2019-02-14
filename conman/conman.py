@@ -204,14 +204,14 @@ class ConmanContainer:
 
         :param command: str     Command to be run
         :param output: bool     Whether Conman should wait for the output or detach immediately.
-        :return: None if output=False, output of the bash command as a string otherwise
+        :return: None if output=False, (exit code: int, msg: str) pairs otherwise
         """
         if not output:
             self.container.exec_run("bash -c '%s'" % command, detach=True)
             return None
 
         exit_code, stream_msgs = self.container.exec_run("bash -c '%s'" % command, stream=True)
-        return stream_msgs[0].decode('utf-8')
+        return exit_code, [msg.decode('utf-8') for msg in stream_msgs]
 
     def stop(self):
         """
