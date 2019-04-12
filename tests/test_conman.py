@@ -52,7 +52,9 @@ class TestConman(unittest.TestCase):
         self._stop(WgetContainer(DockerEngine))
 
     def test_port(self):
-        """Test when no ip provided, does container receive correct host address (0.0.0.0)."""
+        """
+        Test if Docker Container connects to the correct port
+        """
         container = PythonContainer(DockerEngine)
         container.start()
         inspection = container.inspect()
@@ -60,6 +62,18 @@ class TestConman(unittest.TestCase):
         expected = [{"HostIp": "0.0.0.0", "HostPort": "8080"}]
         port_info = inspection['NetworkSettings']['Ports'].get('8080/tcp')
         self.assertEqual(port_info, expected, "Port is different than what is expected")
+
+        container.stop()
+
+    def test_get_host_address(self):
+        """
+        Test if can ConmanContainer returns correct address info
+        """
+        container = PythonContainer(DockerEngine)
+        container.start()
+        
+        expected = "127.0.0.1:8080"
+        self.assertEqual(container.get_host_address(8080), expected, "Address is different than what is expected")
 
         # expected = '0.0.0.0:8080'
         # self.assertEqual(address, expected, "Default IP is incorrect. Expected: %s Actual: %s")

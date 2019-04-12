@@ -9,6 +9,7 @@ __version__ = '0.2.0'
 
 import logging
 import docker
+from sys import platform
 from docker.errors import NotFound as DockerNotFound
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ class DockerEngine:
     def __init__(self):
         self._client = docker.from_env()
 
-    def run(self, name, image, ports=None, expose=None, command=None, volumes={}, network=None):
+    def run(self, name, image, ports=None, command=None, volumes={}, network=None):
         if network is not None:
             try:
                 _ = self._client.networks.get(network)
@@ -84,6 +85,30 @@ class DockerEngine:
 
         return inspection
 
+    def get_host_address(self, container, port, protocol='tcp'):
+        # container is running, but self._ports is not set, this means, Cona
+        port_id = "%s/%s" % (port, protocol)
+        try:
+            conf = container.attrs['NetworkSettings']['Ports'][port_id]
+        except KeyError:
+            return None 
+
+        # if the container is running within a network, then conf returns None.
+        if conf is None: 
+            main_network = list(container.attrs['NetworkSettings']['Networks'].values())[0]
+
+            if platform == 'darwin':
+                message = "Docker Desktop for Mac can’t route traffic to containers."
+                "You'll not be able to connect provided IP address."
+                logger.warning(message)
+
+            return "%s:%s" % main_network['IpAddress'], port
+
+        main_conf = conf[0]
+        host_ip = main_conf['HostIp'] if main_conf['HostIp'] != "0.0.0.0" else "127.0.0.1"
+        host_port = main_conf['HostPort']
+        return "%s:%s" % (host_ip, host_port)
+
     def __del__(self):
         self._client.close()
 
@@ -113,6 +138,9 @@ class ConmanContainer:
     def status(self):
         return self.engine.status(self.container)
 
+    def get_host_address(self, port):
+        return self.engine.get_host_address(self.container, port)
+
     def stop(self):
         self.engine.stop(self.container)
 
@@ -123,7 +151,7 @@ class ConmanContainer:
         return self.engine.inspect(self.container)
 
 
-RUN_CONFIG_KEYS = ['ports', 'command', 'expose', 'volumes', 'network']
+RUN_CONFIG_KEYS = ['ports', 'command', 'volumes', 'network']
 
 
 class TemplatedContainer(ConmanContainer):
@@ -133,7 +161,6 @@ class TemplatedContainer(ConmanContainer):
     name_template = None
     ports = None
     command = None
-    expose = None
     volumes = {}
     network = None
 
