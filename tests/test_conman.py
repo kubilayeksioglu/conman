@@ -21,7 +21,7 @@ class PythonContainer(TemplatedContainer):
 
 class NetworkPythonContainer(TemplatedContainer):
     image = "python:3.7-slim"
-    ports = {'8081':'8081'}
+    ports = {'8081':None}
     network = "conmantest"
     command = "python3 -m http.server 8081"
     name = CONMAN_TEST_PYTHON_NETWORK
