@@ -4,7 +4,7 @@
 
 __author__ = """Kubilay Eksioglu"""
 __email__ = 'kubilayeksioglu@gmail.com'
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 
 
 import logging
@@ -28,9 +28,10 @@ class DockerEngine:
             try:
                 _ = self._client.networks.get(network)
             except DockerNotFound:
+                logger.info("Creating network: %s" % network)
                 self._client.networks.create(network, driver="bridge")
 
-
+        logger.info("Starting image: %s" % image)
         self._client.containers.run(image, 
                                     stdin_open=True, 
                                     tty=True, 
@@ -41,10 +42,16 @@ class DockerEngine:
                                     network=network, 
                                     volumes=volumes)
 
+        logger.info("Image start completed: %s" % image)
+
         # send a default command, in case
         if command:
+            logger.info("Running default command: %s" % command)
             container = self.get(name)
             self.exec(container, command)
+
+        logger.info("Run completed successfully")
+
 
     def exec(self, container, command, output=False):
         """
