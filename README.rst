@@ -16,27 +16,29 @@ Usage
 
 Use as::
 
-    from conman import ConmanContainer
+    from conman import TemplatedContainer
 
     class CustomContainer(ConmanContainer):
         image = "docker-image"
-        container_name = "custom-name"
-        local_ports = (8080)
-        default_command = None
-
-    from conman.utils import get_ip
+        ports = {'8080':'8080'}
+        name = None
+        name_template = "conman-%s"
+        ports = None
+        command = None
+        volumes = {}
+        network = None
 
     container = CustomContainer(1)
-    container.start()
-    container.get_host_address(8080) # returns "0.0.0.0:8081"
+    container.start()  # starts 'conman-1' container
+    container.get_host_address(8080) # returns "127.0.0.1:8080"
 
-    container = CustomContainer(2)
-    container.start(get_ip())
-    container.get_host_address(8080) # returns "$WHATEVER_YOUR_IP_IS$:8082"
+    container = CustomContainer(1)
+    container.start(network='newnetwork')
+    container.get_host_address(8080) # returns "$NETWORK_IP$:8080"
 
 Check status of a container::
 
-    container.status # returns either "exited" or "running"
+    container.status
 
 Credits
 -------
