@@ -127,6 +127,14 @@ class ConmanContainer:
         else:
             raise ContainerNotRunning()
 
+    @property
+    def is_running(self):
+        try:
+            _ = self.container
+            return True
+        except ContainerNotRunning:
+            return False
+    
     def start(self, image, **kwargs):
         container = self.engine.get(self.name)
         if container:
