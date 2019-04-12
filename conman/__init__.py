@@ -4,7 +4,7 @@
 
 __author__ = """Kubilay Eksioglu"""
 __email__ = 'kubilayeksioglu@gmail.com'
-__version__ = '0.2.0'
+__version__ = '0.1.10'
 
 
 import logging
@@ -102,12 +102,13 @@ class DockerEngine:
                 "You'll not be able to connect provided IP address."
                 logger.warning(message)
 
-            return "%s:%s" % main_network['IpAddress'], port
-
-        main_conf = conf[0]
-        host_ip = main_conf['HostIp'] if main_conf['HostIp'] != "0.0.0.0" else "127.0.0.1"
-        host_port = main_conf['HostPort']
-        return "%s:%s" % (host_ip, host_port)
+            host_ip, host_port =  main_network['IpAddress'], port
+        else:
+            main_conf = conf[0]
+            host_ip = main_conf['HostIp'] if main_conf['HostIp'] != "0.0.0.0" else "127.0.0.1"
+            host_port = main_conf['HostPort']
+        
+        return host_ip, host_port
 
     def __del__(self):
         self._client.close()
