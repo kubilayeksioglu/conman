@@ -23,13 +23,16 @@ class DockerEngine:
     def __init__(self):
         self._client = docker.from_env()
 
-    def run(self, name, image, ports=None, command=None, volumes={}, network=None):
+    def run(self, name, image, ports=None, command=None, volumes={}, network=None, auth=None):
         if network is not None:
             try:
                 _ = self._client.networks.get(network)
             except DockerNotFound:
                 logger.info("Creating network: %s" % network)
                 self._client.networks.create(network, driver="bridge")
+
+        if auth:
+            self._client.login(auth)
 
         logger.info("Starting image: %s" % image)
         self._client.containers.run(image, 
@@ -167,18 +170,19 @@ class ConmanContainer:
         return self.engine.inspect(self.container)
 
 
-RUN_CONFIG_KEYS = ['ports', 'command', 'volumes', 'network']
+RUN_CONFIG_KEYS = ['ports', 'command', 'volumes', 'network', 'auth']
 
 
 class TemplatedContainer(ConmanContainer):
 
-    image = None
-    name = None
+    image   = None
+    name    = None
     name_template = None
-    ports = None
+    ports   = None
     command = None
     volumes = {}
     network = None
+    auth    = None
 
     def __init__(self, engine, id=None, name=None, engine_params={}, **kwargs):
         if name is None:
