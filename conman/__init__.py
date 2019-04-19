@@ -17,6 +17,8 @@ logger = logging.getLogger(__name__)
 class ContainerNotRunning(Exception):
     pass
 
+def f():
+    pass
 
 class DockerEngine:
 
@@ -32,6 +34,9 @@ class DockerEngine:
                 self._client.networks.create(network, driver="bridge")
 
         if auth:
+            # enable no param functions
+            if type(auth) == type(f):
+                auth = auth()
             self._client.login(auth)
 
         logger.info("Starting image: %s" % image)
