@@ -125,6 +125,13 @@ class DockerEngine:
         
         return host_ip, host_port
 
+    def get_network_alias(self, container, network):
+        network_conf = container.attrs['NetworkSettings']['Networks'].get(network)
+        if not network_conf:
+            return
+
+        return network_conf['Aliases'][0]
+
     def __del__(self):
         self._client.close()
 
@@ -164,6 +171,12 @@ class ConmanContainer:
 
     def get_host_address(self, port):
         return self.engine.get_host_address(self.container, port)
+
+    def get_network_alias(self, network=None):
+        if network is None:
+            network = self.network
+
+        return self.engine.get_network_alias(self.container, network)
 
     def stop(self):
         self.engine.stop(self.container)
