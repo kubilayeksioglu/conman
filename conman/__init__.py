@@ -37,6 +37,7 @@ class DockerEngine:
             # enable no param functions
             if type(auth) == type(f):
                 auth = auth()
+            logger.info("AUTH provided: --REDACTED--" % image)
             self._client.login(**auth)
 
         logger.info("Starting image: %s" % image)
