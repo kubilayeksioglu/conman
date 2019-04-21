@@ -4,7 +4,7 @@
 
 __author__ = """Kubilay Eksioglu"""
 __email__ = 'kubilayeksioglu@gmail.com'
-__version__ = '0.2.5'
+__version__ = '0.2.4'
 
 
 import logging
@@ -37,7 +37,6 @@ class DockerEngine:
             # enable no param functions
             if type(auth) == type(f):
                 auth = auth()
-            logger.info("AUTH provided: --REDACTED--" % image)
             self._client.login(**auth)
 
         logger.info("Starting image: %s" % image)
@@ -205,5 +204,8 @@ class TemplatedContainer(ConmanContainer):
 
     def start(self, image=None, **kwargs):
         runconfig = {k:getattr(self, k) for k in RUN_CONFIG_KEYS}
+
+        runconfig.update(kwargs)
+
         image = image if image else self.image
         super().start(image, **runconfig)
