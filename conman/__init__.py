@@ -25,7 +25,7 @@ class DockerEngine:
     def __init__(self):
         self._client = docker.from_env()
 
-    def run(self, name, image, ports=None, command=None, volumes={}, network=None, auth=None):
+    def run(self, name, image, ports=None, command=None, volumes={}, network=None, auth=None, environment={}):
         if network is not None:
             try:
                 _ = self._client.networks.get(network)
@@ -47,6 +47,7 @@ class DockerEngine:
                                     ports=ports, 
                                     name=name, 
                                     detach=True,
+                                    environment=environment,
                                     network=network, 
                                     volumes=volumes)
 
