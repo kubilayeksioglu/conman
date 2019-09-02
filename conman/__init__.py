@@ -6,26 +6,29 @@ __author__ = """Kubilay Eksioglu"""
 __email__ = 'kubilayeksioglu@gmail.com'
 __version__ = '0.2.8'
 
-
 import logging
-import docker
 from sys import platform
+
+import docker
 from docker.errors import NotFound as DockerNotFound
+
 logger = logging.getLogger(__name__)
 
 
 class ContainerNotRunning(Exception):
     pass
 
+
 def f():
     pass
+
 
 class DockerEngine:
 
     def __init__(self):
         self._client = docker.from_env()
 
-    def run(self, name, image, ports=None, command=None, volumes={}, network=None, auth=None, environment={}):
+    def run(self, name, image, network=None, auth=None, **kwargs):
         if network is not None:
             try:
                 _ = self._client.networks.get(network)
@@ -40,27 +43,23 @@ class DockerEngine:
             self._client.login(**auth)
 
         logger.info("Starting image: %s" % image)
-        self._client.containers.run(image, 
-                                    stdin_open=True, 
-                                    tty=True, 
-                                    command="/bin/sh", 
-                                    ports=ports, 
-                                    name=name, 
+        self._client.containers.run(image,
+                                    stdin_open=True,
+                                    tty=True,
                                     detach=True,
-                                    environment=environment,
-                                    network=network, 
-                                    volumes=volumes)
+                                    name=name,
+                                    network=network,
+                                    **kwargs)
 
         logger.info("Image start completed: %s" % image)
 
-        # send a default command, in case
-        if command:
-            logger.info("Running default command: %s" % command)
-            container = self.get(name)
-            self.exec(container, command)
+        # # send a default command, in case
+        # if command:
+        #     logger.info("Running default command: %s" % command)
+        #     container = self.get(name)
+        #     self.exec(container, command)
 
-        logger.info("Run completed successfully")
-
+        # logger.info("Run completed successfully")
 
     def exec(self, container, command, output=False):
         """
@@ -87,7 +86,7 @@ class DockerEngine:
         if container.status == 'exited':
             container.remove()
             return None
-        
+
         return container
 
     def stop(self, container):
@@ -107,10 +106,10 @@ class DockerEngine:
         try:
             conf = container.attrs['NetworkSettings']['Ports'][port_id]
         except KeyError:
-            return None 
+            return None
 
         # if the container is running within a network, then conf returns None.
-        if conf is None: 
+        if conf is None:
             main_network = list(container.attrs['NetworkSettings']['Networks'].values())[0]
 
             if platform == 'darwin':
@@ -118,12 +117,12 @@ class DockerEngine:
                 "You'll not be able to connect provided IP address."
                 logger.warning(message)
 
-            host_ip, host_port =  main_network['IpAddress'], port
+            host_ip, host_port = main_network['IpAddress'], port
         else:
             main_conf = conf[0]
             host_ip = main_conf['HostIp'] if main_conf['HostIp'] != "0.0.0.0" else "127.0.0.1"
             host_port = main_conf['HostPort']
-        
+
         return host_ip, host_port
 
     def get_network_alias(self, container, network):
@@ -158,7 +157,7 @@ class ConmanContainer:
             return True
         except ContainerNotRunning:
             return False
-    
+
     def start(self, image, **kwargs):
         container = self.engine.get(self.name)
         if container:
@@ -193,15 +192,14 @@ RUN_CONFIG_KEYS = ['ports', 'command', 'volumes', 'network', 'auth']
 
 
 class TemplatedContainer(ConmanContainer):
-
-    image   = None
-    name    = None
+    image = None
+    name = None
     name_template = None
-    ports   = None
+    ports = None
     command = None
     volumes = {}
     network = None
-    auth    = None
+    auth = None
 
     def __init__(self, engine, id=None, name=None, engine_params={}, **kwargs):
         if name is None:
@@ -212,12 +210,12 @@ class TemplatedContainer(ConmanContainer):
         if name is None:
             raise RuntimeError("cls.name, id or name should be provided")
         super().__init__(engine, name, engine_params)
-        
+
         for key in ['image'] + RUN_CONFIG_KEYS:
             setattr(self, key, kwargs.get(key, getattr(self.__class__, key)))
 
     def start(self, image=None, **kwargs):
-        runconfig = {k:getattr(self, k) for k in RUN_CONFIG_KEYS}
+        runconfig = {k: getattr(self, k) for k in RUN_CONFIG_KEYS}
 
         runconfig.update(kwargs)
 
