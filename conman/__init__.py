@@ -129,7 +129,8 @@ class DockerEngine:
         network_conf = container.attrs['NetworkSettings']['Networks'].get(network)
         if not network_conf:
             return
-
+        if not network_conf['Aliases']:
+            return
         return network_conf['Aliases'][0]
 
     def __del__(self):
