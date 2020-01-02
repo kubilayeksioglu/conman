@@ -4,7 +4,7 @@
 
 __author__ = """Kubilay Eksioglu"""
 __email__ = 'kubilayeksioglu@gmail.com'
-__version__ = '0.2.9'
+__version__ = '0.2.10'
 
 import logging
 from sys import platform
@@ -129,7 +129,8 @@ class DockerEngine:
         network_conf = container.attrs['NetworkSettings']['Networks'].get(network)
         if not network_conf:
             return
-
+        if not network_conf['Aliases']:
+            return
         return network_conf['Aliases'][0]
 
     def __del__(self):
