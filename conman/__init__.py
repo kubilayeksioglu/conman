@@ -4,7 +4,7 @@
 
 __author__ = """Kubilay Eksioglu"""
 __email__ = 'kubilayeksioglu@gmail.com'
-__version__ = '0.2.9'
+__version__ = '0.2.10'
 
 import logging
 from sys import platform
