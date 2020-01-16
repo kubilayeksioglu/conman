@@ -4,6 +4,7 @@ include LICENSE
 include README.rst
 
 recursive-include tests *
+recursive-include conman/engines *
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
 
