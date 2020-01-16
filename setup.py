@@ -42,11 +42,11 @@ setup(
     include_package_data=True,
     keywords='conman',
     name='conman',
-    packages=find_packages(include=['conman']),
+    packages=find_packages(include=['conman', 'conman.engines']),
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/kubilayeksioglu/conman',
-    version='0.2.11',
+    version='0.2.11-beta',
     zip_safe=False,
 )
